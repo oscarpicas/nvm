@@ -2444,10 +2444,15 @@ nvm_download_artifact() {
     command rm -rf "${TARBALL}"
   fi
   nvm_err "Downloading ${TARBALL_URL}..."
+  local UNOFFICIAL_URL
+  UNOFFICIAL_URL="$(echo "${TARBALL_URL}" | sed 's|https://nodejs.org/dist|https://unofficial-builds.nodejs.org/download/release|')"
   nvm_download -L -C - "${PROGRESS_BAR}" "${TARBALL_URL}" -o "${TARBALL}" || (
-    command rm -rf "${TARBALL}" "${tmpdir}"
     nvm_err "download from ${TARBALL_URL} failed"
-    return 4
+    nvm_download -L -C - "${PROGRESS_BAR}" "${UNOFFICIAL_URL}" -o "${TARBALL}" || (
+      command rm -rf "${TARBALL}" "${tmpdir}"
+      nvm_err "download from ${UNOFFICIAL_URL} also failed"
+      return 4
+    )
   )
 
   if nvm_grep '404 Not Found' "${TARBALL}" >/dev/null; then
